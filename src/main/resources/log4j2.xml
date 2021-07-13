@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 日志级别以上优先级排序：OFF > FATAL > ERROR > WARN > INFO > DEBUG > TRACE > ALL -->
+<!-- Configuration后面的status，这个用于设置log4j2自身内部的信息输出，可以不设置，当设置成trace时，你会看到log4j2内部各种详细输出-->
+<!-- monitorInterval：Log4j能够自动检测修改配置 文件和重新配置本身，设置间隔秒数 -->
+<Configuration status="INFO" monitorInterval="30">
+    <Properties>
+        <Property name="logpath">logs</Property>
+    </Properties>
+    <!-- 先定义所有的Appender -->
+    <Appenders>
+        <!-- Console作为一个Appender节点,这个输出控制台的配置 -->
+        <Console name="Console" target="SYSTEM_OUT" >
+            <!--控制台只输出INFO级别及以上级别的信息(onMatch),其他级别的直接拒绝-->
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="[%d][%-5p][%t] %m (%F:%L)%n"/>
+        </Console>
+
+        <!-- 文件会打印出所有信息，这个log每次运行程序会自动清空，由append属性决定，这个也挺有用的，适合临时测试用 -->
+        <!--<File name="log" fileName="${logpath}/test.log" append="false">-->
+            <!--<patternLayout pattern="[%d][%-5p][%t] %m (%F:%L)%n"/>-->
+        <!--</File>-->
+
+        <RollingFile name="RollingFileInfo" fileName="${logpath}/info/info.log"
+                     filePattern="${logpath}/info/info_%d{yyyy-MM-dd}-%i.log">
+            <!-- 该文件只输出level及以上级别的信息(onMatch),如info/warn/error，其他的直接拒绝(onMismatch),即 -->
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="[%d][%-5p][%t] %m (%F:%L)%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="9">
+                <Delete basePath="${logpath}/info" maxDepth="1">
+                    <IfFileName glob="info_*.log"/>
+                    <IfLastModified age="7d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <RollingFile name="RollingFileError" fileName="${logpath}/error/error.log"
+                     filePattern="${logpath}/error/error_%d{yyyy-MM-dd}-%i.log">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="[%d][%-5p][%t] %m (%F:%L)%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="9">
+                <Delete basePath="${logpath}/error" maxDepth="1">
+                    <IfFileName glob="error_*.log"/>
+                    <IfLastModified age="7d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <!--<logger name="org.springframework" level="info"></logger>-->
+        <logger name="org.apache.kafka.clients" level="TRACE"></logger>
+        <!--<logger name="org.springframework.jdbc.core.StatementCreatorUtils" level="trace"></logger>-->
+        <Root level="INFO">
+            <!-- 引入了下面几种Appender节点 -->
+            <!--<AppenderRef ref="Console"/>-->
+            <AppenderRef ref="RollingFileInfo"/>
+            <!--<AppenderRef ref="RollingFileWarn"/>-->
+            <AppenderRef ref="RollingFileError"/>
+        </Root>
+    </Loggers>
+</Configuration>
